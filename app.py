@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Authenticity — AI vs Human Text Detector",
     page_icon="🧾",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 STYLE_FEATURES = ["word_count", "sentence_len_std", "lexical_diversity", "punct_density"]
@@ -28,6 +28,7 @@ def load_models():
 nb_model, lr_model, rf_model, tfidf_vectorizer, style_scaler = load_models()
 
 
+# ============ FEATURE ENGINEERING (matches training notebook exactly) ============
 def word_count(text):
     return len(text.split())
 
@@ -80,7 +81,7 @@ def classify_text(text):
     ai_idx = classes.index(1)
 
     def fmt(pred, proba):
-        return {"label": label_map[pred], "ai_confidence": float(proba[ai_idx]) * 100}
+        return {"label": label_map[pred], "ai_confidence": float(proba[ai_idx])}
 
     return {
         "Naive Bayes": fmt(nb_pred, nb_proba),
@@ -90,462 +91,398 @@ def classify_text(text):
     }
 
 
-st.html("""
+# ============ GLOBAL DARK THEME STYLING ============
+st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
-
 :root {
-    --ink: #0B0F1A;
-    --surface: #12182B;
-    --surface-alt: #171F35;
-    --border: rgba(237, 239, 245, 0.09);
-    --border-strong: rgba(237, 239, 245, 0.16);
-    --text-primary: #EDEFF5;
-    --text-muted: #8890A6;
+    --bg-main: #0B0F1A;
+    --bg-card: #12182B;
+    --bg-card-alt: #171F35;
+    --border: #262D45;
     --human: #E8B75F;
-    --human-dim: rgba(232, 183, 95, 0.12);
+    --human-dark: #B8853A;
     --ai: #4FD1C5;
-    --ai-dim: rgba(79, 209, 197, 0.12);
+    --text-main: #EDEFF5;
+    --text-muted: #8890A6;
 }
 
-.stApp { background-color: var(--ink); color: var(--text-primary); font-family: 'Inter', sans-serif; }
-h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; }
-code { font-family: 'JetBrains Mono', monospace; color: var(--ai); }
+.stApp {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+}
 
+section[data-testid="stSidebar"] {
+    background-color: #0D1220;
+    border-right: 1px solid var(--border);
+}
+
+h1, h2, h3, h4, h5, p, span, div, label {
+    color: var(--text-main);
+}
+
+/* Eyebrow label */
 .eyebrow {
-    font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em;
-    color: var(--ai); text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px;
-    border: 1px solid rgba(79,209,197,0.3); background: var(--ai-dim); padding: 6px 14px; border-radius: 20px;
-    margin-bottom: 20px;
-}
-.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ai); }
-
-h1.title {
-    font-family: 'Space Grotesk', sans-serif !important; font-weight: 600; letter-spacing: -0.02em;
-    font-size: 46px; line-height: 1.1; max-width: 780px; color: #FFFFFF !important;
-    position: static !important; display: block !important; margin: 0 0 18px 0 !important;
-}
-h1.title .h { color: var(--human) !important; }
-h1.title .a { color: var(--ai) !important; }
-p.subtitle {
-    font-size: 16.5px; color: var(--text-muted); max-width: 620px;
-    position: static !important; display: block !important; margin: 0 0 28px 0 !important;
+    display: inline-block;
+    color: var(--ai);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(79, 209, 197, 0.1);
+    border: 1px solid rgba(79, 209, 197, 0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
 }
 
-.demo {
-    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-    display: grid; grid-template-columns: 1fr 1fr; background: var(--surface);
-    position: static !important; margin: 20px 0 !important;
+/* Hero section */
+.hero { padding: 1rem 0 2rem 0; }
+.hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+    color: #FFFFFF;
 }
-.demo-pane { padding: 26px 30px; }
-.demo-pane.human { background: linear-gradient(120deg, var(--human-dim), transparent 60%); border-right: 1px solid var(--ai); }
-.demo-pane.ai { background: linear-gradient(240deg, var(--ai-dim), transparent 60%); }
-.demo-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
-    text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
-}
-.demo-label.human { color: var(--human); }
-.demo-label.ai { color: var(--ai); }
-.demo-label .pct { margin-left: auto; font-weight: 600; }
-.demo-text.human { font-family: 'Special Elite', cursive; font-size: 14.5px; line-height: 1.85; color: #E8E2D0; }
-.demo-text.ai { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.85; color: #CFEFEB; }
-.demo-text mark { padding: 1px 3px; border-radius: 3px; }
-.demo-text.human mark { background: rgba(232,183,95,0.22); color: var(--human); }
-.demo-text.ai mark { background: rgba(79,209,197,0.18); color: var(--ai); }
-.demo-foot {
-    grid-column: 1 / -1; border-top: 1px solid var(--border); padding: 12px 30px;
-    display: flex; justify-content: space-between; align-items: center;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);
+.hero h1 .h { color: var(--human); }
+.hero h1 .a { color: var(--ai); }
+.hero p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 640px;
+    line-height: 1.6;
 }
 
-[data-testid="stMetricValue"] { color: #FFFFFF !important; font-family: 'Space Grotesk', sans-serif !important; }
-[data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
-
-.sec-eyebrow {
-    font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
-}
-.sec-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600; color: #FFFFFF; margin-bottom: 8px; }
-.sec-desc { color: var(--text-muted); font-size: 14.5px; margin-bottom: 20px; }
-
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; padding-bottom: 4px; }
-.chart-card-label { padding: 10px 16px; font-size: 12.5px; color: var(--text-muted); }
-.chart-card-label b { color: var(--text-primary); font-weight: 500; }
-
-/* Streamlit's native bordered container (st.container(border=True)) - used
-   instead of raw <div> wrapping since Streamlit widgets can't actually be
-   nested inside HTML tags split across separate st.markdown() calls. */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    background: var(--surface) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 14px !important;
+/* Card */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
 }
 
-.callout {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; margin-top: 14px;
-}
-.callout .mark { font-family: 'JetBrains Mono', monospace; color: var(--human); font-size: 13px; flex-shrink: 0; margin-top: 2px; }
-.callout p { font-size: 13.5px; color: var(--text-muted); margin: 0; }
-.callout p b { color: var(--text-primary); font-weight: 500; }
-
-.model-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
-.model-table thead th {
-    background: var(--surface-alt); text-align: left; padding: 12px 18px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border);
-}
-.model-table tbody td { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
-.model-table tbody tr:last-child td { border-bottom: none; }
-.model-table tbody tr.winner { background: var(--ai-dim); }
-.model-table .name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; color: var(--text-primary); }
-.model-table .tag {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);
-    border: 1px solid var(--border-strong); padding: 2px 8px; border-radius: 12px; display: inline-block; margin-top: 4px;
-}
-.model-table .score { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary); }
-.model-table tr.winner .score { color: var(--ai); }
-
-.pipeline-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: 100%; }
-.step-num {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ai);
-    border: 1px solid rgba(79,209,197,0.3); background: var(--ai-dim);
-    width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 12px;
-}
-.pipeline-card .title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
-.pipeline-card .desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
-
-.decision-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; height: 100%; }
-.decision-card .title {
-    font-family: 'Space Grotesk', sans-serif; font-size: 14.5px; font-weight: 600;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);
-}
-.decision-card .title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--human); flex-shrink: 0; }
-.decision-card .desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
-.decision-card .desc b { color: var(--text-primary); font-weight: 500; }
-
-.limit-card { background: var(--surface); border: 1px solid rgba(232,183,95,0.25); border-radius: 12px; padding: 18px; height: 100%; }
-.limit-tag {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--human); background: var(--human-dim);
-    border: 1px solid rgba(232,183,95,0.3); padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px;
-}
-.limit-card .desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
-
-
-.stButton > button {
-    background: var(--text-primary) !important; color: var(--ink) !important; font-weight: 700 !important;
-    border: none !important; border-radius: 8px !important; padding: 0.6rem 1.6rem !important;
-}
-.stButton > button:hover { background: var(--ai) !important; color: var(--ink) !important; }
-
-.stTextArea textarea {
-    background: var(--surface-alt) !important; color: #FFFFFF !important;
-    border: 1px solid var(--border-strong) !important; font-family: 'JetBrains Mono', monospace !important;
-    caret-color: var(--ai) !important;
-}
-.stTextArea textarea::placeholder { color: var(--text-muted) !important; opacity: 1 !important; }
-
-.stTabs [data-baseweb="tab-list"], .stTabs [role="tablist"] {
-    gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border);
-}
-.stTabs [data-baseweb="tab"], .stTabs button[role="tab"] {
-    color: var(--text-muted) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 13px !important;
-    border-radius: 7px !important;
-}
-.stTabs [aria-selected="true"] { background: var(--ai) !important; color: #04342C !important; }
-.stTabs [data-baseweb="tab-highlight"] { background: transparent !important; }
-.stTabs [data-baseweb="tab-border"] { display: none !important; }
-
+/* Badge pills */
 .badge {
-    display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px;
-    border-radius: 20px; margin-right: 6px; font-family: 'JetBrains Mono', monospace;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    margin-right: 0.4rem;
 }
-.badge-ai { background: rgba(79,209,197,0.15); color: #5EEAD4; border: 1px solid rgba(79,209,197,0.3); }
-.badge-human { background: rgba(232,183,95,0.15); color: #FCD34D; border: 1px solid rgba(232,183,95,0.3); }
+.badge-human { background: rgba(232, 183, 95, 0.15); color: #FCD34D; border: 1px solid rgba(232, 183, 95, 0.3); }
+.badge-ai { background: rgba(79, 209, 197, 0.15); color: #5EEAD4; border: 1px solid rgba(79, 209, 197, 0.3); }
+.badge-warn { background: rgba(245, 158, 11, 0.15); color: #FCD34D; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-.footer-stack { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-.stack-pill {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);
-    border: 1px solid var(--border); padding: 5px 12px; border-radius: 20px;
+/* Result card */
+.result-card {
+    background: linear-gradient(135deg, rgba(232, 183, 95, 0.12) 0%, rgba(79, 209, 197, 0.08) 100%);
+    border: 1px solid rgba(79, 209, 197, 0.35);
+    border-radius: 14px;
+    padding: 1.5rem 1.8rem;
+    margin-top: 1rem;
 }
+.result-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.result-value { font-size: 1.8rem; font-weight: 800; color: #FFFFFF; margin: 0.3rem 0; }
+
+/* Confidence bar */
+.conf-row { margin-bottom: 0.9rem; }
+.conf-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.conf-track { background: #1E2438; border-radius: 8px; height: 10px; overflow: hidden; }
+.conf-fill { background: linear-gradient(90deg, var(--human), var(--ai)); height: 100%; border-radius: 8px; }
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, var(--ai), #2FA79C);
+    color: #04342C;
+    border: none;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 0.6rem 1.5rem;
+}
+.stButton > button:hover {
+    background: linear-gradient(135deg, #6FE3D8, var(--ai));
+    color: #04342C;
+}
+
+/* Text areas / inputs */
+.stTextArea textarea, .stTextInput input {
+    background: var(--bg-card-alt) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+}
+
+/* Metric override */
+[data-testid="stMetricValue"] { color: #FFFFFF; }
+[data-testid="stMetricLabel"] { color: var(--text-muted); }
+
 hr { border-color: var(--border) !important; }
 </style>
-""")
+""", unsafe_allow_html=True)
 
-st.markdown(
-    '<div class="eyebrow"><span class="dot"></span>487,235 essays classified</div>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<h1 class="title">Tell <span class="h">human</span> writing from <span class="a">AI</span> output.</h1>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<p class="subtitle">A classic machine learning pipeline that scores text on writing style, '
-    'not just word choice — trained on the AI vs Human Text dataset, compared across three '
-    'algorithm families.</p>',
-    unsafe_allow_html=True
-)
-st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
+# ============ SIDEBAR NAVIGATION ============
+with st.sidebar:
+    st.markdown("## 🧾 Authenticity")
+    st.caption("AI vs human text detection")
+    st.markdown("---")
+    page = st.radio(
+        "Navigate",
+        ["🔍  Try It", "📊  Model Performance", "🧠  Model & Method"],
+        label_visibility="collapsed"
+    )
+    st.markdown("---")
+    st.caption("Student project · AI vs Human Text dataset\nNot a plagiarism or authorship ruling")
 
-tab_try, tab_perf, tab_method = st.tabs(["🔍  Try it", "📊  Model performance", "🧠  Model & method"])
-
-with tab_try:
+# ============ TRY IT ============
+if page == "🔍  Try It":
+    st.markdown('<div class="eyebrow">● TRAINED ON 487,235 ESSAYS</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="demo">
-      <div class="demo-pane human">
-        <div class="demo-label human">Human-written <span class="pct">51.8%</span></div>
-        <div class="demo-text human">i really love going to the park on weekends!! its so much fun, <mark>esp when the weather is nice</mark>. my friends and i usually just hang out for hours, we dont really plan anything</div>
-      </div>
-      <div class="demo-pane ai">
-        <div class="demo-label ai">AI-generated <span class="pct">97.3%</span></div>
-        <div class="demo-text ai">Recreational activities provide numerous benefits for social and physical well-being. <mark>Engaging in outdoor pursuits fosters community connections</mark> and contributes to overall health outcomes.</div>
-      </div>
-      <div class="demo-foot">
-        <span>sentence_len_std · word_count · punct_density · lexical_diversity</span>
-        <span>logistic regression · 99.36% F1</span>
-      </div>
+    <div class="hero">
+        <h1>Tell <span class="h">human</span> writing from <span class="a">AI</span> output.</h1>
+        <p>Paste an essay, article, or paragraph — this model scores it on writing style,
+        not just word choice, and predicts whether it was written by a person or generated
+        by AI, using a pipeline trained on 487,235 real essays.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.write("")
     with st.container(border=True):
         text_input = st.text_area(
-            "Paste text to classify",
+            "Text to classify",
             height=180,
             placeholder="Paste an essay, article, or paragraph here...",
-            label_visibility="visible"
+            label_visibility="collapsed"
         )
-        classify_clicked = st.button("🔎  Classify", type="primary")
+        predict_clicked = st.button("🔎  Classify This Text", type="primary")
 
-    if classify_clicked:
+    if predict_clicked:
         if not text_input or not text_input.strip():
-            st.warning("Paste some text first.")
+            st.warning("Paste some text first — then hit classify.")
         else:
-            with st.spinner("Running all three models..."):
-                result = classify_text(text_input)
-
+            result = classify_text(text_input)
             lr_result = result["Logistic Regression"]
             badge_class = "badge-ai" if lr_result["label"] == "AI" else "badge-human"
 
             st.markdown(f"""
-            <div class="demo" style="grid-template-columns: 1fr; margin-top: 20px;">
-                <div class="demo-pane" style="grid-column: 1/-1;">
-                    <div class="demo-label" style="color:var(--text-muted);">Prediction (Logistic Regression)</div>
-                    <h2 style="color:#FFFFFF; margin: 4px 0 10px 0;">{lr_result['label']}</h2>
-                    <span class="badge {badge_class}">AI confidence: {lr_result['ai_confidence']:.1f}%</span>
-                </div>
-                <div class="demo-foot" style="grid-column:1/-1;">
-                    <span>All 3 models run live on your text</span>
-                    <span>logistic regression · 99.36% F1</span>
-                </div>
+            <div class="result-card">
+                <div class="result-label">Prediction</div>
+                <div class="result-value">{lr_result['label']}</div>
+                <span class="{badge_class} badge">AI confidence: {lr_result['ai_confidence']*100:.1f}%</span>
+                <span class="badge badge-ai">Logistic Regression</span>
             </div>
             """, unsafe_allow_html=True)
 
-            rows = ""
+            st.markdown("#### Model breakdown")
+            bars_html = '<div class="card">'
             for name in ["Logistic Regression", "Random Forest", "Naive Bayes"]:
                 r = result[name]
-                winner_class = "winner" if name == "Logistic Regression" else ""
-                badge = "badge-ai" if r["label"] == "AI" else "badge-human"
-                rows += f"""
-                <tr class="{winner_class}">
-                    <td class="name">{name}</td>
-                    <td><span class="badge {badge}">{r['label']}</span></td>
-                    <td class="score">{r['ai_confidence']:.1f}%</td>
-                </tr>
-                """
-            st.markdown(f"""
-            <table class="model-table">
-                <thead><tr><th>Model</th><th>Prediction</th><th>AI confidence</th></tr></thead>
-                <tbody>{rows}</tbody>
-            </table>
-            """, unsafe_allow_html=True)
+                pct = r["ai_confidence"] * 100
+                bars_html += (
+                    '<div class="conf-row">'
+                    f'<div class="conf-label"><span>{name} → {r["label"]}</span><span>{pct:.1f}% AI</span></div>'
+                    f'<div class="conf-track"><div class="conf-fill" style="width:{pct}%;"></div></div>'
+                    '</div>'
+                )
+            bars_html += '</div>'
+            st.markdown(bars_html, unsafe_allow_html=True)
 
+            st.markdown("#### Stylometric features (this text)")
             sf = result["style_features"]
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Word count", f"{sf['word_count']:.0f}")
-            c2.metric("Sentence variance", f"{sf['sentence_len_std']:.2f}")
-            c3.metric("Lexical diversity", f"{sf['lexical_diversity']:.2f}")
-            c4.metric("Punctuation density", f"{sf['punct_density']:.2f}")
+            with c1:
+                st.metric("Word count", f"{sf['word_count']:.0f}")
+            with c2:
+                st.metric("Sentence variance", f"{sf['sentence_len_std']:.2f}")
+            with c3:
+                st.metric("Lexical diversity", f"{sf['lexical_diversity']:.2f}")
+            with c4:
+                st.metric("Punctuation density", f"{sf['punct_density']:.2f}")
 
             st.caption(
                 "Prediction uses the real trained pipeline (TF-IDF + 4 stylometric features → "
-                "Logistic Regression / Random Forest; TF-IDF only → Naive Bayes). Not a hiring or "
-                "publishing decision — a model estimate."
+                "Logistic Regression / Random Forest; TF-IDF only → Naive Bayes). "
+                "Best model accuracy is 99.36% on held-out test data — not a hiring or "
+                "publishing decision, a model estimate."
             )
 
-with tab_perf:
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Best model F1", "99.36%")
-    m2.metric("Essays after cleaning", "487,235")
-    m3.metric("Errors on test rows", "625")
-    m4.metric("Stylometric features", "4")
+# ============ MODEL PERFORMANCE ============
+elif page == "📊  Model Performance":
+    st.markdown('<div class="eyebrow">● EVALUATED ON 97,447 HELD-OUT ESSAYS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero"><h1>Test set performance</h1></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="sec-eyebrow">Exploratory analysis</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">What the data showed</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-desc">Sentence-length variance turned out to be the strongest stylometric signal — AI text keeps a tighter, more uniform rhythm than human writing.</div>', unsafe_allow_html=True)
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Best model accuracy", "99.36%")
+    with m2:
+        st.metric("Best model F1", "99.36%")
+    with m3:
+        st.metric("Test errors", "625 / 97,447")
 
+    st.markdown("### Exploratory analysis")
     e1, e2 = st.columns(2)
     with e1:
         with st.container(border=True):
-            st.image("chart_class_balance.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Class balance</b> — 62.8% human, 37.2% AI</div>', unsafe_allow_html=True)
+            st.markdown("#### Class balance")
+            st.image("chart_class_balance.png", width='stretch')
+            st.caption("62.8% human, 37.2% AI.")
     with e2:
         with st.container(border=True):
-            st.image("chart_length_distribution.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Word count by class</b> — human text has a longer tail</div>', unsafe_allow_html=True)
+            st.markdown("#### Word count by class")
+            st.image("chart_length_distribution.png", width='stretch')
+            st.caption("Human text has a longer tail.")
 
     e3, e4 = st.columns(2)
     with e3:
         with st.container(border=True):
-            st.image("chart_sentence_stats.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Sentence variance</b> — AI clusters at low variance</div>', unsafe_allow_html=True)
+            st.markdown("#### Sentence length variance")
+            st.image("chart_sentence_stats.png", width='stretch')
+            st.caption("AI text clusters at low variance — a tighter, more uniform rhythm.")
     with e4:
         with st.container(border=True):
-            st.image("chart_lexical_diversity.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Lexical diversity</b> — weak but real difference</div>', unsafe_allow_html=True)
+            st.markdown("#### Lexical diversity")
+            st.image("chart_lexical_diversity.png", width='stretch')
+            st.caption("Weak but real difference between classes.")
 
-    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-eyebrow">Model evaluation</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">Held-out test set performance</div>', unsafe_allow_html=True)
-
+    st.markdown("### Model comparison")
     p1, p2 = st.columns(2)
     with p1:
         with st.container(border=True):
-            st.image("chart_model_comparison.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Model comparison</b> — Logistic Regression leads on every metric</div>', unsafe_allow_html=True)
+            st.markdown("#### Accuracy / F1 by model")
+            st.image("chart_model_comparison.png", width='stretch')
+            st.caption("Logistic Regression leads on every metric.")
     with p2:
         with st.container(border=True):
-            st.image("chart_confusion_matrix.png", use_container_width=True)
-            st.markdown('<div class="chart-card-label"><b>Confusion matrix</b> — 625 errors out of 97,447 test rows</div>', unsafe_allow_html=True)
+            st.markdown("#### Confusion matrix")
+            st.image("chart_confusion_matrix.png", width='stretch')
+            st.caption("625 errors out of 97,447 test rows, roughly balanced in both directions.")
 
     with st.container(border=True):
+        st.markdown("#### Stylometric feature importance")
         fi_col = st.columns([1, 2, 1])[1]
         with fi_col:
-            st.image("chart_feature_importance.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Stylometric feature importance</b> — sentence_len_std ranks highest, confirming the EDA</div>', unsafe_allow_html=True)
+            st.image("chart_feature_importance.png", width='stretch')
+        st.caption(
+            "sentence_len_std ranks highest, confirming the EDA finding. word_count ranks "
+            "second — the honest caveat is that part of this is a dataset-specific shortcut "
+            "(this dataset's AI outputs run shorter), not pure style detection."
+        )
 
+# ============ MODEL & METHOD ============
+else:
+    st.markdown('<div class="eyebrow">● HOW IT WORKS</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="callout">
-        <span class="mark">note</span>
-        <p><b>Word count is the honest caveat.</b> It's the second-strongest stylometric feature, which means part of what the model learned is genuinely about sentence rhythm — and part of it is about output length, a dataset-specific shortcut rather than pure style detection.</p>
+    <div class="hero">
+        <h1>Project overview</h1>
+        <p>A classic machine learning pipeline that scores text on writing style, not just
+        word choice — trained on the AI vs Human Text dataset and compared across three
+        genuinely different algorithm families, as required by the assignment.</p>
     </div>
     """, unsafe_allow_html=True)
 
-with tab_method:
-    st.markdown('<div class="sec-eyebrow">Three algorithms</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">Genuinely different model families</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-desc">Not three variations on the same idea — a probabilistic model, a linear model, and a tree ensemble, each given the inputs suited to how it learns.</div>', unsafe_allow_html=True)
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.metric("Essays after cleaning", "487,235")
+    with m2:
+        st.metric("Algorithms compared", "3")
+    with m3:
+        st.metric("Best model F1", "99.36%")
+    with m4:
+        st.metric("Stylometric features", "4")
 
+    st.markdown("### Three genuinely different algorithms")
     st.markdown("""
-    <table class="model-table">
-        <thead><tr><th>Model</th><th>Family</th><th>Features</th><th>Accuracy</th><th>F1</th></tr></thead>
-        <tbody>
-            <tr class="winner">
-                <td><div class="name">Logistic Regression</div><span class="tag">winner</span></td>
-                <td>Linear</td><td>TF-IDF + stylometric</td>
-                <td class="score">99.36%</td><td class="score">99.36%</td>
+    <div class="card">
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border); text-align:left; font-size:0.8rem; text-transform:uppercase; color:var(--text-muted);">
+                <th style="padding:8px 0;">Model</th><th>Family</th><th>Features</th><th>Accuracy</th><th>F1</th>
+            </tr>
+        </thead>
+        <tbody style="font-size:0.9rem;">
+            <tr style="border-bottom: 1px solid var(--border); background: rgba(79,209,197,0.08);">
+                <td style="padding:10px 0;"><b>Logistic Regression</b> <span class="badge badge-ai">winner</span></td>
+                <td>Linear</td><td>TF-IDF + stylometric</td><td><b>99.36%</b></td><td><b>99.36%</b></td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding:10px 0;">Random Forest</td>
+                <td>Tree ensemble</td><td>TF-IDF + stylometric</td><td>99.15%</td><td>99.15%</td>
             </tr>
             <tr>
-                <td><div class="name">Random Forest</div></td>
-                <td>Tree ensemble</td><td>TF-IDF + stylometric</td>
-                <td class="score">99.15%</td><td class="score">99.15%</td>
-            </tr>
-            <tr>
-                <td><div class="name">Naive Bayes</div></td>
-                <td>Probabilistic</td><td>TF-IDF only</td>
-                <td class="score">95.47%</td><td class="score">95.45%</td>
+                <td style="padding:10px 0;">Naive Bayes</td>
+                <td>Probabilistic</td><td>TF-IDF only</td><td>95.47%</td><td>95.45%</td>
             </tr>
         </tbody>
     </table>
+    </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-eyebrow">Pipeline</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">How the pipeline works</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-desc">From raw CSV to three compared models.</div>', unsafe_allow_html=True)
-
+    st.markdown("### The pipeline")
+    p1, p2, p3, p4, p5 = st.columns(5)
     steps = [
-        ("1", "Clean", "Drop duplicate and null rows. 487,235 essays remain from the raw file."),
-        ("2", "EDA", "Check class balance, length, and sentence structure before building anything."),
-        ("3", "Engineer", "Four stylometric features kept from EDA. TF-IDF (5,000 features) built alongside."),
-        ("4", "Combine", "Stylometric features scaled and stacked onto the TF-IDF matrix for two of the three models."),
-        ("5", "Compare", "Same train/test split across all three, scored on accuracy, precision, recall, F1."),
+        ("1. Clean", "Dropped duplicate and null rows. 487,235 essays remain from the raw file."),
+        ("2. EDA", "Checked class balance, length, and sentence structure before building anything."),
+        ("3. Engineer", "4 stylometric features kept from EDA. TF-IDF (5,000 features) built alongside."),
+        ("4. Combine", "Stylometric features scaled and stacked onto the TF-IDF matrix for 2 of the 3 models."),
+        ("5. Compare", "Same train/test split across all three, scored on accuracy, precision, recall, F1."),
     ]
-    cols = st.columns(5)
-    for col, (num, title, desc) in zip(cols, steps):
+    for col, (title, desc) in zip([p1, p2, p3, p4, p5], steps):
         with col:
-            st.markdown(f"""
-            <div class="pipeline-card">
-                <div class="step-num">{num}</div>
-                <div class="title">{title}</div>
-                <div class="desc">{desc}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div class="card"><b>{title}</b><br><span style="color:#8890A6;font-size:0.85rem;">{desc}</span></div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-eyebrow">Reasoning</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">Key engineering decisions</div>', unsafe_allow_html=True)
-
+    st.markdown("### Key engineering decisions")
     d1, d2 = st.columns(2)
     with d1:
         st.markdown("""
-        <div class="decision-card">
-        <div class="title">Why these four stylometric features</div>
-        <div class="desc">EDA tested six candidates. <b>Average sentence length</b> barely differed between classes and was dropped. <b>Sentence length variance</b>, <b>word count</b>, <b>lexical diversity</b>, and <b>punctuation density</b> all showed real separation and made the final feature set.</div>
+        <div class="card">
+        <b>Why these four stylometric features</b><br><br>
+        EDA tested six candidates. Average sentence length barely differed between classes
+        and was dropped. Sentence length variance, word count, lexical diversity, and
+        punctuation density all showed real separation and made the final feature set.
         </div>
-        """, unsafe_allow_html=True)
-        st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="decision-card">
-        <div class="title">Why Naive Bayes only gets TF-IDF</div>
-        <div class="desc">Multinomial Naive Bayes assumes non-negative, count-like input. The scaled, centered stylometric features (some negative after standardization) don't fit that assumption, so Naive Bayes trains on word content alone while the other two get the combined set.</div>
+        <div class="card">
+        <b>Why Naive Bayes only gets TF-IDF</b><br><br>
+        Multinomial Naive Bayes assumes non-negative, count-like input. The scaled, centered
+        stylometric features (some negative after standardization) don't fit that assumption,
+        so Naive Bayes trains on word content alone.
         </div>
         """, unsafe_allow_html=True)
     with d2:
         st.markdown("""
-        <div class="decision-card">
-        <div class="title">Why class_weight is balanced</div>
-        <div class="desc">The dataset is 62.8% human, 37.2% AI — not severe, but enough to bias a model toward the majority class without correction. All three models weight classes inversely to frequency during training.</div>
+        <div class="card">
+        <b>Why class_weight is balanced</b><br><br>
+        The dataset is 62.8% human, 37.2% AI — not severe, but enough to bias a model toward
+        the majority class without correction. All three models weight classes inversely to
+        frequency during training.
         </div>
-        """, unsafe_allow_html=True)
-        st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="decision-card">
-        <div class="title">Why TF-IDF is capped at 5,000 features</div>
-        <div class="desc">A larger vocabulary would help Naive Bayes, but Random Forest gets slow and memory-heavy on very high-dimensional sparse input. 5,000 keeps every model trainable on the same feature set within a normal Colab session.</div>
+        <div class="card">
+        <b>Why TF-IDF is capped at 5,000 features</b><br><br>
+        A larger vocabulary would help Naive Bayes, but Random Forest gets slow and
+        memory-heavy on very high-dimensional sparse input. 5,000 keeps every model
+        trainable on the same feature set within a normal Colab session.
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-eyebrow">Honest limitations</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sec-title">Where this can be wrong</div>', unsafe_allow_html=True)
+    st.markdown("### What synthetic negative examples fixed")
+    st.markdown("""
+    <div class="card">
+    The suitability of stylometric features alone wasn't the full story — Logistic Regression
+    beat Random Forest and Naive Bayes on every metric (MAE-equivalent: 99.36% vs 99.15% vs
+    95.47% accuracy), and sentence-length variance turned out to be a stronger, more genuine
+    style signal than raw word count, which is more of a dataset-specific shortcut.
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown("### Honest limitations")
     l1, l2, l3 = st.columns(3)
-    limits = [
-        ("Shortcut risk", "word_count is the second-strongest stylometric feature. Part of what the model learned is genuinely about writing style — part of it is this dataset's AI outputs tending to run shorter, which may not hold for other AI writing tools."),
+    limitations = [
+        ("Shortcut risk", "word_count is the second-strongest stylometric feature. Part of what the model learned is genuinely about writing style — part of it is this dataset's AI outputs tending to run shorter."),
         ("Single dataset", "Trained and tested on one AI vs Human Text dataset. A different AI model family, prompt style, or writing domain could shift these numbers in either direction."),
-        ("Simple sentence splitting", "Sentence boundaries are detected with a basic regex on . ! ? — not a proper NLP sentence tokenizer — abbreviations and edge cases can slightly skew the sentence-length features."),
+        ("Simple sentence splitting", "Sentence boundaries use a basic regex on . ! ? — not a proper NLP tokenizer — abbreviations and edge cases can slightly skew the sentence-length features."),
     ]
-    for col, (title, desc) in zip([l1, l2, l3], limits):
+    for col, (title, desc) in zip([l1, l2, l3], limitations):
         with col:
-            st.markdown(f"""
-            <div class="limit-card">
-                <span class="limit-tag">{title}</span>
-                <div class="desc">{desc}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div class="card"><span class="badge badge-warn">{title}</span><br><br><span style="color:#8890A6;font-size:0.9rem;">{desc}</span></div>', unsafe_allow_html=True)
 
-st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("""
-<div class="footer-stack">
-    <span class="stack-pill">scikit-learn</span>
-    <span class="stack-pill">polars</span>
-    <span class="stack-pill">TF-IDF</span>
-    <span class="stack-pill">streamlit</span>
-</div>
-""", unsafe_allow_html=True)
-st.caption("Trained on Google Colab · AI vs Human Text dataset")
+    st.markdown("---")
+    st.caption("Models: MultinomialNB, LogisticRegression, RandomForestClassifier · random_state=42 · trained on Google Colab (free tier)")
