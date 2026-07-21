@@ -172,6 +172,15 @@ p.subtitle {
 .chart-card-label { padding: 10px 16px; font-size: 12.5px; color: var(--text-muted); }
 .chart-card-label b { color: var(--text-primary); font-weight: 500; }
 
+/* Streamlit's native bordered container (st.container(border=True)) - used
+   instead of raw <div> wrapping since Streamlit widgets can't actually be
+   nested inside HTML tags split across separate st.markdown() calls. */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+}
+
 .callout {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
     padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; margin-top: 14px;
@@ -224,8 +233,6 @@ p.subtitle {
 }
 .limit-card .desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
 
-.try-box { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); padding: 24px; margin-top: 16px; }
-.try-box label { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
 
 .stButton > button {
     background: var(--text-primary) !important; color: var(--ink) !important; font-weight: 700 !important;
@@ -303,15 +310,15 @@ with tab_try:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="try-box">', unsafe_allow_html=True)
-    text_input = st.text_area(
-        "Paste text to classify",
-        height=180,
-        placeholder="Paste an essay, article, or paragraph here...",
-        label_visibility="visible"
-    )
-    classify_clicked = st.button("🔎  Classify", type="primary")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.write("")
+    with st.container(border=True):
+        text_input = st.text_area(
+            "Paste text to classify",
+            height=180,
+            placeholder="Paste an essay, article, or paragraph here...",
+            label_visibility="visible"
+        )
+        classify_clicked = st.button("🔎  Classify", type="primary")
 
     if classify_clicked:
         if not text_input or not text_input.strip():
@@ -382,23 +389,23 @@ with tab_perf:
 
     e1, e2 = st.columns(2)
     with e1:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_class_balance.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Class balance</b> — 62.8% human, 37.2% AI</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_class_balance.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Class balance</b> — 62.8% human, 37.2% AI</div>', unsafe_allow_html=True)
     with e2:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_length_distribution.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Word count by class</b> — human text has a longer tail</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_length_distribution.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Word count by class</b> — human text has a longer tail</div>', unsafe_allow_html=True)
 
     e3, e4 = st.columns(2)
     with e3:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_sentence_stats.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Sentence variance</b> — AI clusters at low variance</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_sentence_stats.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Sentence variance</b> — AI clusters at low variance</div>', unsafe_allow_html=True)
     with e4:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_lexical_diversity.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Lexical diversity</b> — weak but real difference</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_lexical_diversity.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Lexical diversity</b> — weak but real difference</div>', unsafe_allow_html=True)
 
     st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-eyebrow">Model evaluation</div>', unsafe_allow_html=True)
@@ -406,19 +413,19 @@ with tab_perf:
 
     p1, p2 = st.columns(2)
     with p1:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_model_comparison.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Model comparison</b> — Logistic Regression leads on every metric</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_model_comparison.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Model comparison</b> — Logistic Regression leads on every metric</div>', unsafe_allow_html=True)
     with p2:
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.image("chart_confusion_matrix.png", use_container_width=True)
-        st.markdown('<div class="chart-card-label"><b>Confusion matrix</b> — 625 errors out of 97,447 test rows</div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.image("chart_confusion_matrix.png", use_container_width=True)
+            st.markdown('<div class="chart-card-label"><b>Confusion matrix</b> — 625 errors out of 97,447 test rows</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="chart-card" style="margin-top:16px;">', unsafe_allow_html=True)
-    fi_col = st.columns([1, 2, 1])[1]
-    with fi_col:
-        st.image("chart_feature_importance.png", use_container_width=True)
-    st.markdown('<div class="chart-card-label"><b>Stylometric feature importance</b> — sentence_len_std ranks highest, confirming the EDA</div></div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        fi_col = st.columns([1, 2, 1])[1]
+        with fi_col:
+            st.image("chart_feature_importance.png", use_container_width=True)
+        st.markdown('<div class="chart-card-label"><b>Stylometric feature importance</b> — sentence_len_std ranks highest, confirming the EDA</div>', unsafe_allow_html=True)
 
     st.markdown("""
     <div class="callout">
