@@ -122,23 +122,23 @@ code { font-family: 'JetBrains Mono', monospace; color: var(--ai); }
 
 h1.title {
     font-family: 'Space Grotesk', sans-serif !important; font-weight: 600; letter-spacing: -0.02em;
-    font-size: 46px; line-height: 1.1; max-width: 780px; margin-bottom: 18px; color: #FFFFFF !important;
+    font-size: 46px; line-height: 1.1; max-width: 780px; color: #FFFFFF !important;
+    position: static !important; display: block !important; margin: 0 0 18px 0 !important;
 }
 h1.title .h { color: var(--human) !important; }
 h1.title .a { color: var(--ai) !important; }
-p.subtitle { font-size: 16.5px; color: var(--text-muted); max-width: 620px; margin-bottom: 8px; }
+p.subtitle {
+    font-size: 16.5px; color: var(--text-muted); max-width: 620px;
+    position: static !important; display: block !important; margin: 0 0 28px 0 !important;
+}
 
 .demo {
     border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-    display: grid; grid-template-columns: 1fr 1fr; position: relative; background: var(--surface);
+    display: grid; grid-template-columns: 1fr 1fr; background: var(--surface);
+    position: static !important; margin: 20px 0 !important;
 }
-.demo::before {
-    content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
-    background: linear-gradient(180deg, transparent, var(--ai) 20%, var(--ai) 80%, transparent);
-    z-index: 2;
-}
-.demo-pane { padding: 26px 30px; position: relative; }
-.demo-pane.human { background: linear-gradient(120deg, var(--human-dim), transparent 60%); }
+.demo-pane { padding: 26px 30px; }
+.demo-pane.human { background: linear-gradient(120deg, var(--human-dim), transparent 60%); border-right: 1px solid var(--ai); }
 .demo-pane.ai { background: linear-gradient(240deg, var(--ai-dim), transparent 60%); }
 .demo-label {
     font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
@@ -281,7 +281,7 @@ st.markdown(
     'algorithm families.</p>',
     unsafe_allow_html=True
 )
-st.write("")
+st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
 
 tab_try, tab_perf, tab_method = st.tabs(["🔍  Try it", "📊  Model performance", "🧠  Model & method"])
 
@@ -400,7 +400,7 @@ with tab_perf:
         st.image("chart_lexical_diversity.png", use_container_width=True)
         st.markdown('<div class="chart-card-label"><b>Lexical diversity</b> — weak but real difference</div></div>', unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-eyebrow">Model evaluation</div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-title">Held-out test set performance</div>', unsafe_allow_html=True)
 
@@ -455,7 +455,7 @@ with tab_method:
     </table>
     """, unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-eyebrow">Pipeline</div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-title">How the pipeline works</div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-desc">From raw CSV to three compared models.</div>', unsafe_allow_html=True)
@@ -478,7 +478,7 @@ with tab_method:
             </div>
             """, unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-eyebrow">Reasoning</div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-title">Key engineering decisions</div>', unsafe_allow_html=True)
 
@@ -490,7 +490,7 @@ with tab_method:
         <div class="desc">EDA tested six candidates. <b>Average sentence length</b> barely differed between classes and was dropped. <b>Sentence length variance</b>, <b>word count</b>, <b>lexical diversity</b>, and <b>punctuation density</b> all showed real separation and made the final feature set.</div>
         </div>
         """, unsafe_allow_html=True)
-        st.write("")
+        st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
         st.markdown("""
         <div class="decision-card">
         <div class="title">Why Naive Bayes only gets TF-IDF</div>
@@ -504,7 +504,7 @@ with tab_method:
         <div class="desc">The dataset is 62.8% human, 37.2% AI — not severe, but enough to bias a model toward the majority class without correction. All three models weight classes inversely to frequency during training.</div>
         </div>
         """, unsafe_allow_html=True)
-        st.write("")
+        st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
         st.markdown("""
         <div class="decision-card">
         <div class="title">Why TF-IDF is capped at 5,000 features</div>
@@ -512,7 +512,7 @@ with tab_method:
         </div>
         """, unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-eyebrow">Honest limitations</div>', unsafe_allow_html=True)
     st.markdown('<div class="sec-title">Where this can be wrong</div>', unsafe_allow_html=True)
 
@@ -531,7 +531,7 @@ with tab_method:
             </div>
             """, unsafe_allow_html=True)
 
-st.write("")
+st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown("""
 <div class="footer-stack">
