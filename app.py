@@ -186,9 +186,11 @@ h1, h2, h3, h4 { color: var(--text-primary) !important; }
 }
 .stTextArea textarea::placeholder { color: var(--text-muted) !important; opacity: 1 !important; }
 
-.stTabs [data-baseweb="tab-list"] { gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); justify-content: flex-end; }
-.stTabs [data-baseweb="tab"] { color: var(--text-muted) !important; border-radius: 7px !important; }
+.stTabs [role="tablist"] { gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); width: fit-content; }
+.stTabs [role="tab"], .stTabs [data-testid="stTab"] { color: var(--text-muted) !important; border-radius: 7px !important; }
+.stTabs [role="tab"] *, .stTabs [data-testid="stTab"] * { color: inherit !important; }
 .stTabs [aria-selected="true"] { background: var(--ai) !important; color: #04342C !important; }
+.stTabs [aria-selected="true"] * { color: #04342C !important; }
 
 [data-testid="stMetricValue"] { color: #FFFFFF !important; }
 [data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
@@ -197,11 +199,8 @@ hr { border-color: var(--border) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-col_brand, col_tabs = st.columns([1, 2])
-with col_brand:
-    st.markdown('<div class="brand-row"><div class="brand-icon"></div><div class="brand-name">Authenticity</div></div>', unsafe_allow_html=True)
-with col_tabs:
-    tab_try, tab_perf, tab_method = st.tabs(["Try it", "Model performance", "Model & method"])
+st.markdown('<div class="brand-row"><div class="brand-icon"></div><div class="brand-name">Authenticity</div></div>', unsafe_allow_html=True)
+tab_try, tab_perf, tab_method = st.tabs(["Try it", "Model performance", "Model & method"])
 
 with tab_try:
     st.markdown('<div class="eyebrow">● 487,235 essays classified</div>', unsafe_allow_html=True)
