@@ -90,7 +90,6 @@ def classify_text(text):
     }
 
 
-# ============ GLOBAL THEME (same CSS confirmed working earlier this session) ============
 st.markdown("""
 <style>
 :root {
@@ -110,7 +109,7 @@ st.markdown("""
 .stApp { background-color: var(--ink); color: var(--text-primary); }
 h1, h2, h3, h4 { color: var(--text-primary) !important; }
 
-.brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.brand-row { display: flex; align-items: center; gap: 10px; padding-top: 6px; }
 .brand-icon {
     width: 26px; height: 26px; border-radius: 7px;
     background: linear-gradient(135deg, var(--human) 0%, var(--human) 49%, var(--ai) 51%, var(--ai) 100%);
@@ -187,7 +186,7 @@ h1, h2, h3, h4 { color: var(--text-primary) !important; }
 }
 .stTextArea textarea::placeholder { color: var(--text-muted) !important; opacity: 1 !important; }
 
-.stTabs [data-baseweb="tab-list"] { gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+.stTabs [data-baseweb="tab-list"] { gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); justify-content: flex-end; }
 .stTabs [data-baseweb="tab"] { color: var(--text-muted) !important; border-radius: 7px !important; }
 .stTabs [aria-selected="true"] { background: var(--ai) !important; color: #04342C !important; }
 
@@ -198,9 +197,11 @@ hr { border-color: var(--border) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="brand-row"><div class="brand-icon"></div><div class="brand-name">Authenticity</div></div>', unsafe_allow_html=True)
-
-tab_try, tab_perf, tab_method = st.tabs(["Try it", "Model performance", "Model & method"])
+col_brand, col_tabs = st.columns([1, 2])
+with col_brand:
+    st.markdown('<div class="brand-row"><div class="brand-icon"></div><div class="brand-name">Authenticity</div></div>', unsafe_allow_html=True)
+with col_tabs:
+    tab_try, tab_perf, tab_method = st.tabs(["Try it", "Model performance", "Model & method"])
 
 with tab_try:
     st.markdown('<div class="eyebrow">● 487,235 essays classified</div>', unsafe_allow_html=True)
@@ -322,7 +323,10 @@ with tab_perf:
             st.image("chart_feature_importance.png", width='stretch')
 
 with tab_method:
-    st.markdown("### Three genuinely different algorithms")
+    st.markdown('<div class="eyebrow">THREE ALGORITHMS</div>', unsafe_allow_html=True)
+    st.markdown("### Genuinely different model families")
+    st.markdown('<p style="color:var(--text-muted);">Not three variations on the same idea — a probabilistic model, a linear model, and a tree ensemble, each given the inputs suited to how it learns.</p>', unsafe_allow_html=True)
+
     st.markdown("""
     <div class="card">
     <table style="width:100%; border-collapse: collapse;">
@@ -349,12 +353,61 @@ with tab_method:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### Honest limitations")
+    st.markdown('<div class="eyebrow" style="margin-top:2rem;">PIPELINE</div>', unsafe_allow_html=True)
+    st.markdown("### How the pipeline works")
+    st.markdown('<p style="color:var(--text-muted);">From raw CSV to three compared models.</p>', unsafe_allow_html=True)
+
+    steps = [
+        ("1", "Clean", "Drop duplicate and null rows. 487,235 essays remain from the raw file."),
+        ("2", "EDA", "Check class balance, length, and sentence structure before building anything."),
+        ("3", "Engineer", "Four stylometric features kept from EDA. TF-IDF (5,000 features) built alongside."),
+        ("4", "Combine", "Stylometric features scaled and stacked onto the TF-IDF matrix for two of the three models."),
+        ("5", "Compare", "Same train/test split across all three, scored on accuracy, precision, recall, F1."),
+    ]
+    cols = st.columns(5)
+    for col, (num, title, desc) in zip(cols, steps):
+        with col:
+            st.markdown(f'<div class="card"><span class="badge badge-ai">{num}</span><br><br><b>{title}</b><br><span style="color:#8890A6;font-size:0.85rem;">{desc}</span></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="eyebrow" style="margin-top:2rem;">REASONING</div>', unsafe_allow_html=True)
+    st.markdown("### Key engineering decisions")
+
+    d1, d2 = st.columns(2)
+    with d1:
+        st.markdown("""
+        <div class="card">
+        <b>● Why these four stylometric features</b><br><br>
+        EDA tested six candidates. <b>Average sentence length</b> barely differed between classes and was dropped. <b>Sentence length variance</b>, <b>word count</b>, <b>lexical diversity</b>, and <b>punctuation density</b> all showed real separation and made the final feature set.
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        <div class="card">
+        <b>● Why class_weight is balanced</b><br><br>
+        The dataset is 62.8% human, 37.2% AI — not severe, but enough to bias a model toward the majority class without correction. All three models weight classes inversely to frequency during training.
+        </div>
+        """, unsafe_allow_html=True)
+    with d2:
+        st.markdown("""
+        <div class="card">
+        <b>● Why Naive Bayes only gets TF-IDF</b><br><br>
+        Multinomial Naive Bayes assumes non-negative, count-like input. The scaled, centered stylometric features (some negative after standardization) don't fit that assumption, so Naive Bayes trains on word content alone while the other two get the combined set.
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        <div class="card">
+        <b>● Why TF-IDF is capped at 5,000 features</b><br><br>
+        A larger vocabulary would help Naive Bayes, but Random Forest gets slow and memory-heavy on very high-dimensional sparse input. 5,000 keeps every model trainable on the same feature set within a normal Colab session.
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('<div class="eyebrow" style="margin-top:2rem;">HONEST LIMITATIONS</div>', unsafe_allow_html=True)
+    st.markdown("### Where this can be wrong")
+
     l1, l2, l3 = st.columns(3)
     limitations = [
-        ("Shortcut risk", "word_count is the second-strongest stylometric feature — part shortcut, part genuine style signal."),
-        ("Single dataset", "Trained on essays only. A different genre (e.g. professional bios) can shift results — confirmed by testing."),
-        ("Simple sentence splitting", "Sentence boundaries use a basic regex, not a proper NLP tokenizer."),
+        ("Shortcut risk", "word_count is the second-strongest stylometric feature. Part of what the model learned is genuinely about writing style — part of it is this dataset's AI outputs tending to run shorter, which may not hold for other AI writing tools."),
+        ("Single dataset", "Trained and tested on one AI vs Human Text dataset. A different AI model family, prompt style, or writing domain could shift these numbers in either direction."),
+        ("Simple sentence splitting", "Sentence boundaries are detected with a basic regex on . ! ? — not a proper NLP sentence tokenizer."),
     ]
     for col, (title, desc) in zip([l1, l2, l3], limitations):
         with col:
