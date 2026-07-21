@@ -98,11 +98,13 @@ def classify_text(text):
 
 
 # ============ GLOBAL THEME STYLING (matches design mockup) ============
-st.markdown("""
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+# Using st.html() instead of st.markdown(unsafe_allow_html=True) - Streamlit's
+# markdown renderer doesn't reliably pass <style>/<link> tags through untouched,
+# it can end up printing the raw CSS as literal page text instead of applying it.
+# st.html() injects raw HTML/CSS directly with no markdown parsing in the way.
+st.html("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
 :root {
     --ink: #0B0F1A;
     --surface: #12182B;
@@ -181,7 +183,7 @@ code { font-family: 'JetBrains Mono', monospace; color: var(--ai); }
 
 hr { border-color: var(--border) !important; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
 # ============ HEADER ============
 st.markdown('<div class="eyebrow">● 487,235 essays classified</div>', unsafe_allow_html=True)
